@@ -1,8 +1,19 @@
 [package]
-name = "libastrolabe"
-version = "0.1.0"
+name = "astrolabe"
+version = "1.0.0"
+description = "Date and time library"
+authors = ["XXIV"]
+homepage = "https://github.com/thechampagne/libastrolabe"
+repository = "https://github.com/thechampagne/libastrolabe"
+readme = "README.md"
+license = "MIT"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+name = "astrolabe"
+crate-type =["cdylib","staticlib"]
+
 [dependencies]
+astrolabe = "0.2.0"
