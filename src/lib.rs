@@ -232,3 +232,124 @@ unsafe extern "C" fn astrolabe_date_format(astrolabe_date: *mut astrolabe_date_t
     Err(_) => null_mut()
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use crate::*;
+  use std::ffi::CString;
+  use std::ffi::CStr;
+
+  #[test]
+  fn astrolabe_date_now_test() {
+    unsafe {
+      let mut date = astrolabe_date_now();
+      assert!(2021 < astrolabe_date_get(&mut date as *mut astrolabe_date_t, astrolabe_date_unit::DATE_UNIT_YEAR));
+    }
+  }
+
+  #[test]
+  fn astrolabe_date_from_ymd_test() {
+    #[allow(temporary_cstring_as_ptr)]
+    unsafe {
+      let mut err = astrolabe_error::ASTROLABE_NONE;
+      let mut date = astrolabe_date_from_ymd(2022, 05, 02, &mut err as *mut astrolabe_error);
+      assert_eq!("2022/05/02", CStr::from_ptr(astrolabe_date_format(&mut date as *mut astrolabe_date_t, CString::new("yyyy/MM/dd").unwrap().as_ptr())).to_str().unwrap());
+    }
+  }
+
+  #[test]
+  fn astrolabe_date_from_timestamp_test() {
+    #[allow(temporary_cstring_as_ptr)]
+    unsafe {
+      let mut err = astrolabe_error::ASTROLABE_NONE;
+      let mut date = astrolabe_date_from_timestamp(0, &mut err as *mut astrolabe_error);
+      assert_eq!("1970/01/01", CStr::from_ptr(astrolabe_date_format(&mut date as *mut astrolabe_date_t, CString::new("yyyy/MM/dd").unwrap().as_ptr())).to_str().unwrap());
+    }
+  }
+
+  #[test]
+  fn astrolabe_date_from_days_test() {
+    #[allow(temporary_cstring_as_ptr)]
+    unsafe {
+      let mut date = astrolabe_date_from_days(738276);
+      assert_eq!("2022/05/02", CStr::from_ptr(astrolabe_date_format(&mut date as *mut astrolabe_date_t, CString::new("yyyy/MM/dd").unwrap().as_ptr())).to_str().unwrap());
+    }
+  }
+
+  #[test]
+  fn astrolabe_date_as_days_test() {
+    unsafe {
+      let mut err = astrolabe_error::ASTROLABE_NONE;
+      let mut date = astrolabe_date_from_ymd(1, 1, 1, &mut err as *mut astrolabe_error);
+      assert_eq!(0, astrolabe_date_as_days(&mut date as *mut astrolabe_date_t));
+    }
+  }
+
+  #[test]
+  fn astrolabe_date_timestamp_test() {
+    unsafe {
+      let mut err = astrolabe_error::ASTROLABE_NONE;
+      let mut date = astrolabe_date_from_ymd(2000, 1, 1, &mut err as *mut astrolabe_error);
+      assert_eq!(946_684_800, astrolabe_date_timestamp(&mut date as *mut astrolabe_date_t));
+    }
+  }
+
+  #[test]
+  fn astrolabe_date_between_test() {
+    unsafe {
+      let mut err = astrolabe_error::ASTROLABE_NONE;
+      let mut err2 = astrolabe_error::ASTROLABE_NONE;
+      let mut date = astrolabe_date_from_ymd(1970, 1, 1, &mut err as *mut astrolabe_error);
+      let mut date2 = astrolabe_date_from_ymd(1970, 2, 1, &mut err2 as *mut astrolabe_error);
+      assert_eq!(31, astrolabe_date_between(&mut date as *mut astrolabe_date_t, &mut date2 as *mut astrolabe_date_t));
+    }
+  }
+
+  #[test]
+  fn astrolabe_date_get_test() {
+    unsafe {
+      let mut err = astrolabe_error::ASTROLABE_NONE;
+      let mut date = astrolabe_date_from_ymd(2022, 5, 2, &mut err as *mut astrolabe_error);
+      assert_eq!(2022, astrolabe_date_get(&mut date as *mut astrolabe_date_t, astrolabe_date_unit::DATE_UNIT_YEAR));
+      assert_eq!(5, astrolabe_date_get(&mut date as *mut astrolabe_date_t, astrolabe_date_unit::DATE_UNIT_MONTH));
+      assert_eq!(2, astrolabe_date_get(&mut date as *mut astrolabe_date_t, astrolabe_date_unit::DATE_UNIT_DAY));
+    }
+  }
+
+  #[test]
+  fn astrolabe_date_set_test() {
+    #[allow(temporary_cstring_as_ptr)]
+    unsafe {
+      let mut err = astrolabe_error::ASTROLABE_NONE;
+      let mut date = astrolabe_date_from_ymd(2022, 5, 2, &mut err as *mut astrolabe_error);
+      date = astrolabe_date_set(&mut date as *mut astrolabe_date_t, 2000, astrolabe_date_unit::DATE_UNIT_YEAR, &mut err as *mut astrolabe_error);
+      date = astrolabe_date_set(&mut date as *mut astrolabe_date_t, 10, astrolabe_date_unit::DATE_UNIT_DAY, &mut err as *mut astrolabe_error);
+      assert_eq!("2000/05/10", CStr::from_ptr(astrolabe_date_format(&mut date as *mut astrolabe_date_t, CString::new("yyyy/MM/dd").unwrap().as_ptr())).to_str().unwrap());
+    }
+  }
+
+  #[test]
+  fn astrolabe_date_apply_test() {
+    #[allow(temporary_cstring_as_ptr)]
+    unsafe {
+      let mut err = astrolabe_error::ASTROLABE_NONE;
+      let mut err_applied = astrolabe_error::ASTROLABE_NONE;
+      let mut date = astrolabe_date_from_ymd(1970, 1, 1, &mut err as *mut astrolabe_error);
+      let mut applied = astrolabe_date_apply(&mut date as *mut astrolabe_date_t, 1, astrolabe_date_unit::DATE_UNIT_DAY, &mut err_applied as *mut astrolabe_error);
+      assert_eq!("1970/01/01", CStr::from_ptr(astrolabe_date_format(&mut date as *mut astrolabe_date_t, CString::new("yyyy/MM/dd").unwrap().as_ptr())).to_str().unwrap());
+      assert_eq!("1970/01/02", CStr::from_ptr(astrolabe_date_format(&mut applied as *mut astrolabe_date_t, CString::new("yyyy/MM/dd").unwrap().as_ptr())).to_str().unwrap());
+    }
+  }
+
+  #[test]
+  fn astrolabe_date_format_test() {
+    #[allow(temporary_cstring_as_ptr)]
+    unsafe {
+      let mut err = astrolabe_error::ASTROLABE_NONE;
+      let mut date = astrolabe_date_from_ymd(2022, 5, 2, &mut err as *mut astrolabe_error);
+      assert_eq!("2022/05/02", CStr::from_ptr(astrolabe_date_format(&mut date as *mut astrolabe_date_t, CString::new("yyyy/MM/dd").unwrap().as_ptr())).to_str().unwrap());
+      assert_eq!("2022/MM/dd", CStr::from_ptr(astrolabe_date_format(&mut date as *mut astrolabe_date_t, CString::new("yyyy/'MM/dd'").unwrap().as_ptr())).to_str().unwrap());
+      assert_eq!("2022/'05/02'", CStr::from_ptr(astrolabe_date_format(&mut date as *mut astrolabe_date_t, CString::new("yyyy/''MM/dd''").unwrap().as_ptr())).to_str().unwrap());
+    }
+  }
+}
